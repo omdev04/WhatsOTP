@@ -2,7 +2,7 @@
 
 ## Before Deployment
 
-- [ ] Update `.env` file with production values:
+- [*] Update `.env` file with production values:
   - [ ] Set `NODE_ENV=production`
   - [ ] Generate a new strong `SESSION_SECRET` (don't use the one in the repo)
   - [ ] Set `COOKIE_SECURE=true`
@@ -86,3 +86,4 @@
 - **Analytics**: Set up analytics to monitor user behavior
 - **Performance Monitoring**: Tools like New Relic or Datadog
 - **Error Tracking**: Consider Sentry or similar error tracking service
+
