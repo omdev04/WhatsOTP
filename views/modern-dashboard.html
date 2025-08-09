@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsOTP</title>
+    <link rel="stylesheet" href="/modern-style.css">
+    <link rel="stylesheet" href="/toast-api.css">
+    <link rel="stylesheet" href="/api-token.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- QR Code libraries - Using multiple sources for redundancy -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@latest/build/qrcode.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/whatsotp-logo.svg">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .template-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            gap: 15px;
+        }
+
+        .secondary-btn {
+            background-color: var(--secondary-btn-bg);
+            color: var(--secondary-btn-text);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--secondary-btn-hover-bg);
+            transform: translateY(-1px);
+        }
+
+        .save-status {
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-status.show {
+            opacity: 1;
+        }
+        
+        .mt-2 {
+            margin-top: 1.5rem;
+        }
+        
+        .highlight-section {
+            animation: pulsate 1.5s ease-out;
+            animation-iteration-count: 3;
+        }
+        
+        @keyframes pulsate {
+            0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0); }
+            100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+        }
+
+        /* Smooth transitions for all elements */
+        * {
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, color 0.3s;
+        }
+
+        /* Smooth animations for scrollable elements */
+        .logs-container,
+        .card,
+        .tab-content {
+            scroll-behavior: smooth;
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background-color: rgba(51, 51, 51, 0.8);
+            border: 1px solid #777;
+            color: #ffffff;
+            padding: 12px 20px;
+            margin: 30px 0 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 100;
+            font-weight: 500;
+            border-radius: var(--radius);
+        }
+
+        .warning-banner i {
+            color: #fff;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .warning-banner p {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.5;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Copy success notification */
+        .copy-success {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(25, 118, 210, 0.9);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .copy-success i {
+            margin-right: 5px;
+        }
+
+        /* Integration section styling */
+        .integration-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .integration-tab {
+            background: var(--glass-bg);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .integration-tab h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        /* Logo styling */
+        .whatsotp-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            vertical-align: middle;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* User profile styling */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+            gap: 10px;
+            padding-left: 20px;
+            border-left: 1px solid var(--border-color);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #f1f1f1;
+        }
+        
+        .logout-button {
+            color: var(--text-light-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+        
+        .logout-button:hover {
+            background-color: rgba(var(--danger-rgb), 0.1);
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Dark Mode Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <span class="moon"><i class="fas fa-moon"></i></span>
+        <span class="sun"><i class="fas fa-sun"></i></span>
+    </button>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <a href="/" class="logo">
+                <div class="logo-icon"><img src="/whatsotp-logo.svg" alt="WhatsOTP Logo" class="whatsotp-logo"></div>
+                <h1>WhatsOTP</h1>
+            </a>
+        </div>
+        <div class="navbar-right">
+            <div class="status-container">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot disconnected"></div>
+                    <span id="connectionStatus">Disconnected</span>
+                </div>
+                <div class="nav-links">
+                    <a href="/api-docs" class="nav-link"><i class="fas fa-book"></i> API Docs</a>
+                </div>
+                <div class="user-profile">
+                    <img id="userAvatar" src="" alt="User Profile" class="user-avatar">
+                    <span id="userName">Loading...</span>
+                    <a href="/auth/logout" class="logout-button"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Alert Container for notifications -->
+            <div id="alertContainer" class="alert-container"></div>
+
+            <!-- Two main sections: QR Code & OTP Operations -->
+            <div class="content-wrapper">
+                <!-- Left section - QR Code -->
+                <div class="qr-section">
+                    <div class="card">
+                        <h2><i class="fas fa-qrcode"></i> Connect WhatsOTP</h2>
+                        <div class="qr-container">
+                            <div id="qrCodeImage" class="qr-image-container">
+                                <!-- QR code will be generated here dynamically -->
+                                <img id="qrImg" src="" alt="WhatsOTP QR Code" style="display:none;">
+                            </div>
+                            <div id="qrCodeText" class="qr-text">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                                    <p>Loading QR code...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qr-instructions">
+                            <ol>
+                                <li><i class="fas fa-mobile-alt"></i> Open WhatsApp on your phone</li>
+                                <li><i class="fas fa-cog"></i> Tap Menu or Settings and select Linked Devices</li>
+                                <li><i class="fas fa-camera"></i> Tap on "Link a Device" and scan the QR code</li>
+                            </ol>
+                        </div>
+                        <div class="pill-badge">
+                            <i class="fas fa-info-circle"></i> Scan to connect
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right section - OTP Operations -->
+                <div class="operations-section">
+                    <div class="card">
+                        <h2><i class="fas fa-key"></i> OTP Operations</h2>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="sendOtp"><i class="fas fa-paper-plane"></i> Send
+                                OTP</button>
+                            <button class="tab-btn" data-tab="verifyOtp"><i class="fas fa-check-circle"></i> Verify
+                                OTP</button>
+                            <button class="tab-btn" data-tab="apiToken"><i class="fas fa-key"></i> API Token</button>
+                        </div>
+
+                        <div class="tab-content active" id="sendOtp">
+                            <form id="sendOtpForm">
+                                <div class="form-group">
+                                    <label for="phoneNumber"><i class="fas fa-phone"></i> Phone Number (with country
+                                        code)</label>
+                                    <input type="tel" id="phoneNumber" class="form-input"
+                                        placeholder="e.g., 911234567890" required>
+                                </div>
+
+                                <button type="submit" class="btn primary-btn">
+                                    <i class="fas fa-paper-plane"></i> Send OTP
+                                </button>
+                            </form>
+
+                            <!-- API Endpoint Section -->
+                            <div class="api-endpoint-section">
+                                <h3><i class="fas fa-code"></i> API Endpoint</h3>
+                                <div class="endpoint-container">
+                                    <code>POST api/send/otp</code>
+                                    <button class="copy-btn" data-copy="POST api/send/otp">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="endpoint-example">
+                                    <pre>{
+  "phone": "911234567890"
+}
+</pre>
+                                    <button class="copy-btn"
+                                        data-copy='{"phone": "911234567890"}'>
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                
+
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="verifyOtp">
+                            <form id="verifyOtpForm">
+                                <div class="form-group">
+                                    <label for="verifyPhone"><i class="fas fa-phone"></i> Phone Number</label>
+                                    <input type="tel" id="verifyPhone" class="form-input"
+                                        placeholder="e.g., 911234567890" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="otpCode"><i class="fas fa-key"></i> OTP Code</label>
+                                    <input type="text" id="otpCode" class="form-input" placeholder="Enter 6-digit OTP"
+                                        maxlength="6" required>
+                                </div>
+                                <button type="submit" class="btn success-btn">
+                                    <i class="fas fa-check-circle"></i> Verify OTP
+                                </button>
+                            </form>
+
+                            <!-- API Endpoint Section -->
+                            <div class="api-endpoint-section">
+                                <h3><i class="fas fa-code"></i> API Endpoint</h3>
+                                <div class="endpoint-container">
+                                    <code>POST api/verify/otp</code>
+                                    <button class="copy-btn" data-copy="POST api/verify/otp">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="endpoint-example">
+                                    <pre>{
+  "phone": "911234567890",
+  "otp": "123456"
+}</pre>
+                                    <button class="copy-btn" data-copy='{"phone": "911234567890", "otp": "123456"}'>
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+                        </div>
+
+                        </div>
+                    </div>
+
+                        <!-- API Token Tab -->
+                        <div class="tab-content" id="apiToken">
+                            <div class="api-token-section">
+                                <h3><i class="fas fa-key"></i> Your API Token</h3>
+                                <p>Use this token to authenticate API requests from external tools (like Postman or Thunder Client)</p>
+                                
+                                <div class="token-container">
+                                    <div class="form-group">
+                                        <label for="apiTokenDisplay">API Token</label>
+                                        <div class="token-display">
+                                            <input type="text" id="apiTokenDisplay" class="form-input" readonly value="Loading...">
+                                            <button id="copyToken" class="icon-btn" title="Copy to clipboard">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="token-actions">
+                                        <button id="generateToken" class="btn secondary-btn">
+                                            <i class="fas fa-sync"></i> Generate New Token
+                                        </button>
+                                        <button id="revokeToken" class="btn danger-btn">
+                                            <i class="fas fa-trash"></i> Revoke Token
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="token-instructions">
+                                    <h4>How to use your API token:</h4>
+                                    <ol>
+                                        <li>Add the <code>x-api-token</code> header to your API requests</li>
+                                        <li>Include your token value as shown in the example below</li>
+                                    </ol>
+                                    
+                                    <div class="code-block">
+                                        <pre>
+{
+  "headers": {
+    "Content-Type": "application/json",
+    "x-api-token": "<span id="tokenExample">your-token-here</span>"
+  }
+}
+                                        </pre>
+                                        <button class="copy-btn" id="copyHeaderExample">
+                                            <i class="fas fa-copy"></i> Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+            <!-- Activity Logs -->
+            <div class="logs-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                        <button id="clearLogs" class="text-btn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="logs-container" id="logsContainer">
+                        <!-- Logs will be inserted here dynamically -->
+                        <div class="log-entry info">
+                            <div class="log-icon"><i class="fas fa-info-circle"></i></div>
+                            <div class="log-content">
+                                <p class="log-message">System initialized</p>
+                                <span class="log-time">Just now</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple Integration Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-code"></i> Simple Integration</h2>
+                </div>
+                <div class="integration-container">
+                    <div class="integration-tab">
+                        <h3><i class="fas fa-paper-plane"></i> Send OTP</h3>
+                        <div class="code-block">
+                            <button class="copy-btn" data-copy="// Send OTP
+fetch('/api/otp/send', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ phone: '919876543210' })
+})
+.then(response => response.json())
+.then(data => console.log(data));">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <pre>
+// Send OTP
+fetch('/api/otp/send', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ phone: '919876543210' })
+})
+.then(response => response.json())
+.then(data => console.log(data));</pre>
+                        </div>
+                    </div>
+
+                    <div class="integration-tab">
+                        <h3><i class="fas fa-check-circle"></i> Verify OTP</h3>
+                        <div class="code-block">
+                            <button class="copy-btn" data-copy="// Verify OTP
+fetch('/api/otp/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    phone: '919876543210',
+    otp: '123456'
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <pre>
+// Verify OTP
+fetch('/api/otp/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    phone: '919876543210',
+    otp: '123456'
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Banner -->
+            <div class="warning-banner">
+                <i class="fas fa-shield-alt"></i>
+                <p><strong>Warning:</strong> This application is provided for testing and educational purposes only. It is not intended for production use.</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>Made with <i class="fas fa-heart" style="color: #ff5252;"></i> by Om Shukla</p>
+                <a href="https://github.com/Om976346" target="_blank" class="github-link">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/modern-dashboard.js"></script>
+
+    <script>
+        // Fetch user profile information
+        async function fetchUserProfile() {
+            try {
+                const response = await fetch('/dashboard/profile');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile');
+                }
+                
+                const data = await response.json();
+                if (data.success && data.user) {
+                    document.getElementById('userName').textContent = data.user.name;
+                    const avatarElement = document.getElementById('userAvatar');
+                    if (data.user.image) {
+                        avatarElement.src = data.user.image;
+                        avatarElement.onerror = function() {
+                            this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.user.name) + '&background=random';
+                        };
+                    } else {
+                        avatarElement.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.user.name) + '&background=random';
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+            }
+        }
+        
+        // Fetch user profile on page load
+        document.addEventListener('DOMContentLoaded', fetchUserProfile);
+        
+        // Handle copy to clipboard functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Handle scroll effects for showcase text
+            const showcaseText = document.querySelector('.showcase-text');
+            const scrollThreshold = 100; // Pixels to scroll before collapsing
+
+            // Throttle function to limit scroll event firing
+            function throttle(callback, limit) {
+                let waiting = false;
+                return function () {
+                    if (!waiting) {
+                        callback.apply(this, arguments);
+                        waiting = true;
+                        setTimeout(() => {
+                            waiting = false;
+                        }, limit);
+                    }
+                };
+            }
+
+            // Handle scroll events with throttling
+            window.addEventListener('scroll', throttle(function () {
+                const scrollPosition = window.scrollY;
+
+                // Apply parallax effect to showcase text
+                if (scrollPosition > scrollThreshold) {
+                    showcaseText.classList.add('collapsed');
+                } else {
+                    showcaseText.classList.remove('collapsed');
+                }
+            }, 50));
+
+            // Add smooth scrolling for all anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Initialize copy buttons
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const textToCopy = this.getAttribute('data-copy');
+                    navigator.clipboard.writeText(textToCopy)
+                        .then(() => {
+                            showCopySuccess(this);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                        });
+                });
+            });
+
+            function showCopySuccess(button) {
+                // Create success notification
+                const parent = button.closest('.endpoint-container, .endpoint-example');
+                const notification = document.createElement('div');
+                notification.className = 'copy-success';
+                notification.innerHTML = '<i class="fas fa-check"></i> Copied!';
+
+                // Add to DOM
+                parent.style.position = 'relative';
+                parent.appendChild(notification);
+
+                // Animate and remove
+                setTimeout(() => {
+                    notification.style.opacity = '1';
+                    setTimeout(() => {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }, 1000);
+                }, 10);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WhatsOTP</title>
+    <link rel="stylesheet" href="/modern-style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/whatsotp-logo.svg">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--spacing-xl) var(--spacing-md);
+            text-align: center;
+        }
+
+        .login-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: var(--spacing-xl);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .login-title {
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-color);
+        }
+
+        .login-subtitle {
+            color: var(--text-light-color);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            width: 100%;
+            padding: var(--spacing-md);
+            background-color: #ffffff;
+            color: #333333;
+            border-radius: var(--radius);
+            border: 1px solid #dddddd;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .login-btn:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            background-color: #f8f8f8;
+        }
+
+        .login-btn img {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-container">
+        <div class="login-card">
+            <img src="/whatsotp-logo.svg" alt="WhatsOTP Logo" class="login-logo">
+            <h1 class="login-title">Welcome to WhatsOTP</h1>
+            <p class="login-subtitle">Log in with your Google account to continue</p>
+            <a href="/auth/google" class="login-btn" id="googleLoginBtn">
+                <img src="/google_logo.webp" alt="Google Logo">
+                <span>Sign in with Google</span>
+            </a>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Display current URL for debugging purposes
+                    document.getElementById('currentURL').textContent = window.location.host;
+                
+                    document.getElementById('googleLoginBtn').addEventListener('click', function(e) {
+                        this.innerHTML = '<div class="spinner"></div><span>Connecting...</span>';
+                        this.style.opacity = '0.8';
+                        this.style.pointerEvents = 'none';
+                    });
+                });
+            </script>
+            <style>
+                .login-note {
+                    font-size: 0.8rem;
+                    color: #777;
+                    margin-bottom: var(--spacing-md);
+                }
+                
+                .spinner {
+                    width: 20px;
+                    height: 20px;
+                    border: 3px solid rgba(0,0,0,0.1);
+                    border-radius: 50%;
+                    border-top-color: var(--primary);
+                    animation: spin 1s ease infinite;
+                }
+                
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            </style>
+            <br>
+            <p class="login-footer">Secure OTP Authentication via WhatsApp</p>
+        </div>
+    </main>
+</body>
+</html>
