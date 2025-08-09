@@ -54,7 +54,7 @@ app.use(helmet({
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
         ? [process.env.PRODUCTION_URL] 
-        : ['https://whatsotp-bcav.onrender.com'],
+        : ['http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
     optionsSuccessStatus: 204
@@ -472,5 +472,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 OTP API running on port ${PORT}`));
+
 
 
