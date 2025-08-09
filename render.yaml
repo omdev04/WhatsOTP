@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: whatsotp
+    env: node
+    buildCommand: npm install
+    startCommand: npm run prod
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: MONGODB_URI
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /api/health
+    plan: starter
+    autoDeploy: false
